@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a0303">
+<title>🎰 Лудка 3000</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 30%, #3a0a0a 0%, #1a0303 50%, #000 100%);
+    font-family: 'Arial Black', Arial, sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,215,0,.08), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(255,0,0,.08), transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: clamp(18px, 5vw, 28px);
+    letter-spacing: 2px;
+    background: linear-gradient(#fff8d0, #ffcc00, #b8860b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(255,200,0,.5);
+    z-index: 5;
+    text-align: center;
+  }
+
+  .balance-box {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 16px;
+    font-family: Arial, sans-serif;
+    font-size: clamp(13px, 3.6vw, 17px);
+    background: rgba(0,0,0,.55);
+    padding: 7px 18px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,215,0,.35);
+    box-shadow: 0 0 15px rgba(255,200,0,.15);
+    z-index: 5;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .balance-box span b { color: #ffd54a; }
+  .balance-box span.low b { color: #ff6b6b; }
+
+  .bet-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bet-control b { color: #ffd54a; min-width: 3.2em; text-align: center; display: inline-block; }
+  .bet-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,215,0,.45);
+    background: linear-gradient(#3a1a00, #1a0a00);
+    color: #ffd54a;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 0 8px rgba(255,200,0,.2);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    transition: filter .1s, transform .08s;
+  }
+  .bet-btn:hover:not(:disabled) { filter: brightness(1.25); }
+  .bet-btn:active:not(:disabled) { transform: scale(.92); }
+  .bet-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+
+  .machine {
+    position: relative;
+    background: linear-gradient(160deg, #6a0000, #3a0000 60%, #1a0000);
+    border: clamp(3px, 1vw, 5px) solid #d4af37;
+    border-radius: clamp(14px, 4vw, 24px);
+    padding: clamp(12px, 3.5vw, 26px) clamp(10px, 3vw, 24px) clamp(12px, 3vw, 22px);
+    box-shadow:
+      0 0 60px rgba(255,190,0,.35),
+      0 20px 40px rgba(0,0,0,.8),
+      inset 0 0 30px rgba(0,0,0,.8);
+    z-index: 5;
+    max-width: 100%;
+  }
+
+  .machine::before,
+  .machine::after {
+    content: "";
+    position: absolute;
+    width: clamp(8px, 2vw, 12px);
+    height: clamp(8px, 2vw, 12px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff6c0, #d4af37 60%, #7a5c00);
+    box-shadow: 0 0 6px rgba(255,220,100,.8);
+    top: clamp(8px, 2vw, 12px);
+  }
+  .machine::before { left: clamp(9px, 2vw, 14px); }
+  .machine::after  { right: clamp(9px, 2vw, 14px); }
+
+  .reels {
+    display: flex;
+    gap: clamp(4px, 1.2vw, 8px);
+    background: #0a0a0a;
+    padding: clamp(7px, 2vw, 14px);
+    border-radius: clamp(9px, 2.5vw, 14px);
+    border: clamp(2px, .6vw, 3px) solid #2a2a2a;
+    box-shadow: inset 0 0 30px #000, 0 0 20px rgba(0,0,0,.8);
+    justify-content: center;
+  }
+
+  .reel-wrap {
+    position: relative;
+    width: clamp(48px, 15vw, 96px);
+    height: clamp(64px, 19vw, 120px);
+    background: linear-gradient(#f5f5f5, #d8d8d8);
+    border-radius: clamp(5px, 1.4vw, 8px);
+    overflow: hidden;
+    box-shadow:
+      inset 0 10px 18px rgba(0,0,0,.45),
+      inset 0 -10px 18px rgba(0,0,0,.45);
+  }
+
+  .reel-wrap::before,
+  .reel-wrap::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 22%;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .reel-wrap::before {
+    top: 0;
+    background: linear-gradient(rgba(0,0,0,.6), transparent);
+  }
+  .reel-wrap::after {
+    bottom: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,.6));
+  }
+
+  .strip {
+    position: absolute;
+    left: 0; right: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+  }
+
+  .cell {
+    height: clamp(64px, 19vw, 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(30px, 10vw, 58px);
+    flex: 0 0 clamp(64px, 19vw, 120px);
+  }
+
+  .cell img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .reels.win {
+    animation: winGlow 0.6s ease-in-out 3;
+  }
+  @keyframes winGlow {
+    0%,100% { box-shadow: inset 0 0 30px #000, 0 0 20px rgba(0,0,0,.8); }
+    50%     { box-shadow: inset 0 0 30px #000, 0 0 45px gold, 0 0 25px gold; }
+  }
+
+  .controls {
+    margin-top: clamp(12px, 3vw, 22px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 2vw, 14px);
+  }
+
+  .message {
+    font-size: clamp(15px, 4.4vw, 22px);
+    min-height: 1.4em;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: .5px;
+    transition: .2s;
+  }
+
+  button.spin {
+    position: relative;
+    background: linear-gradient(#ffe066, #ffb300 45%, #d48800);
+    border: none;
+    padding: clamp(12px, 3.4vw, 18px) clamp(36px, 14vw, 64px);
+    font-size: clamp(17px, 5vw, 24px);
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #3a1a00;
+    border-radius: clamp(10px, 2.8vw, 14px);
+    cursor: pointer;
+    box-shadow:
+      0 6px 0 #8a5a00,
+      0 0 25px rgba(255,190,0,.6),
+      inset 0 2px 4px rgba(255,255,255,.6);
+    transition: transform .08s, box-shadow .08s, filter .08s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  button.spin:hover:not(:disabled) { filter: brightness(1.08); }
+  button.spin:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #8a5a00, 0 0 25px rgba(255,190,0,.6), inset 0 2px 4px rgba(255,255,255,.6);
+  }
+  button.spin:disabled {
+    filter: grayscale(.7) brightness(.8);
+    cursor: not-allowed;
+  }
+
+  .stats {
+    font-size: clamp(11px, 3vw, 14px);
+    color: #ffe9a8;
+    opacity: .85;
+    font-family: Arial, sans-serif;
+    letter-spacing: .5px;
+    text-align: center;
+    padding: 0 8px;
+  }
+
+  .bottom-bar {
+    margin-top: clamp(10px, 2.5vw, 18px);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 5;
+    width: 100%;
+    max-width: 480px;
+    padding: 0 8px;
+  }
+
+  .small-btn {
+    background: linear-gradient(#3a6bff, #1e3fbf);
+    border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: clamp(12px, 3.4vw, 15px);
+    font-weight: bold;
+    padding: clamp(9px, 2.4vw, 12px) clamp(14px, 4vw, 22px);
+    border-radius: clamp(9px, 2.4vw, 12px);
+    cursor: pointer;
+    box-shadow: 0 4px 0 #0e2278, 0 0 15px rgba(60,120,255,.4);
+    transition: transform .08s, box-shadow .08s, filter .08s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    flex: 1;
+    max-width: 220px;
+  }
+  .small-btn:hover { filter: brightness(1.12); }
+  .small-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #0e2278;
+  }
+
+  .small-btn.gold {
+    background: linear-gradient(#ffd94a, #d4a800);
+    color: #3a1a00;
+    box-shadow: 0 4px 0 #7a5c00, 0 0 15px rgba(255,200,0,.5);
+  }
+  .small-btn.red {
+    background: linear-gradient(#ff5a5a, #b81e1e);
+    box-shadow: 0 4px 0 #6b0e0e, 0 0 15px rgba(255,60,60,.4);
+  }
+  .small-btn:disabled {
+    filter: grayscale(.7) brightness(.7);
+    cursor: not-allowed;
+  }
+
+  .sound-toggle {
+    position: fixed;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
+    background: rgba(0,0,0,.6);
+    border: 1px solid rgba(255,215,0,.4);
+    color: #ffd54a;
+    font-family: Arial, sans-serif;
+    font-size: clamp(11px, 3vw, 14px);
+    padding: 9px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    transition: .15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .sound-toggle:hover { background: rgba(0,0,0,.8); border-color: gold; }
+
+  /* ========= МОДАЛКА ========= */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.82);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    padding: 16px;
+    touch-action: manipulation;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: linear-gradient(160deg, #2a1a0a, #1a0f05);
+    border: clamp(2px, .8vw, 3px) solid #d4af37;
+    border-radius: clamp(14px, 4vw, 20px);
+    padding: clamp(20px, 5vw, 30px) clamp(18px, 5vw, 34px);
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255,190,0,.4), 0 20px 40px rgba(0,0,0,.9);
+    transform: scale(.9);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal h2 {
+    margin: 0 0 6px;
+    font-size: clamp(19px, 5.5vw, 24px);
+    color: #ffd54a;
+    text-shadow: 0 0 15px rgba(255,200,0,.5);
+  }
+  .modal p {
+    font-family: Arial, sans-serif;
+    font-size: clamp(13px, 3.6vw, 15px);
+    color: #e8d9a8;
+    margin: 0 0 18px;
+    line-height: 1.45;
+  }
+
+  .counter {
+    font-size: clamp(32px, 10vw, 42px);
+    font-weight: 900;
+    color: #ffd54a;
+    margin: 6px 0 4px;
+    text-shadow: 0 0 20px rgba(255,200,0,.6);
+  }
+  .counter-sub {
+    font-family: Arial, sans-serif;
+    font-size: clamp(12px, 3.4vw, 14px);
+    color: #aaa;
+    margin-bottom: 16px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: clamp(10px, 3vw, 14px);
+    background: #0a0505;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,215,0,.3);
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #d4a800, #ffd54a, #fff8b0);
+    border-radius: 20px;
+    transition: width .1s linear;
+    box-shadow: 0 0 12px rgba(255,220,80,.7);
+  }
+
+  .tap-btn {
+    background: linear-gradient(#ffe066, #ffb300 45%, #d48800);
+    border: none;
+    width: 100%;
+    padding: clamp(16px, 4.5vw, 20px);
+    font-size: clamp(18px, 5vw, 22px);
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #3a1a00;
+    border-radius: clamp(11px, 3vw, 14px);
+    cursor: pointer;
+    box-shadow: 0 5px 0 #8a5a00, 0 0 20px rgba(255,190,0,.5);
+    margin-bottom: 14px;
+    /* ⚠️ КЛЮЧЕВЫЕ ФИКСЫ ДЛЯ ТАПА БЕЗ ЗУМА И "ПРЫЖКОВ" */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .tap-btn * { pointer-events: none; }
+  .tap-btn:hover { filter: brightness(1.1); }
+  .tap-btn:active {
+    /* ВМЕСТО transform — лёгкая подсветка, кнопка не "прыгает" */
+    filter: brightness(1.18);
+    box-shadow: 0 5px 0 #8a5a00, 0 0 30px rgba(255,220,80,.85);
+  }
+  .tap-btn.done {
+    background: linear-gradient(#5aff5a, #1eb81e);
+    color: #052a05;
+    box-shadow: 0 5px 0 #0b6b0b, 0 0 25px rgba(90,255,90,.6);
+    cursor: default;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: 1px solid #666;
+    color: #ccc;
+    font-family: Arial, sans-serif;
+    font-size: clamp(12px, 3.4vw, 14px);
+    padding: 9px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .modal-close:hover { border-color: #999; color: #fff; }
+
+  /* ===== ЛАНДШАФТ НА ТЕЛЕФОНЕ: сжимаем вертикальные отступы ===== */
+  @media (max-height: 600px) {
+    h1 { margin-bottom: 4px; }
+    .balance-box { margin-bottom: 6px; padding: 5px 14px; }
+    .controls { margin-top: 8px; gap: 6px; }
+    .bottom-bar { margin-top: 8px; }
+    .message { min-height: 1.1em; }
+    .cell, .reel-wrap { height: 56px; flex-basis: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🎰 ЛУДКА3000</h1>
+
+<div class="balance-box">
+  <span>💰 Баланс: <b id="balanceEl">2000</b> ₽</span>
+  <span id="betBox" class="bet-control">
+    🎯 Ставка:
+    <button type="button" class="bet-btn" id="betMinus" aria-label="Уменьшить ставку">−</button>
+    <b id="betEl">100</b> ₽
+    <button type="button" class="bet-btn" id="betPlus" aria-label="Увеличить ставку">+</button>
+  </span>
+</div>
+
+<div class="machine">
+  <div class="reels" id="reels"></div>
+
+  <div class="controls">
+    <div class="message" id="message">Должно повести!</div>
+    <button class="spin" id="spinBtn">КРУТИТЬ</button>
+    <div class="stats" id="stats"></div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="small-btn gold" id="creditBtn">💳 Кредитнуться</button>
+  <button class="small-btn red" id="resetBtn">🗑 Сброс</button>
+</div>
+
+<button class="sound-toggle" id="soundToggle">🔊 Звук</button>
+
+<!-- ===== МОДАЛКА ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>💳 Микрик</h2>
+    <p>Нажми на кнопку <b>10 раз</b>, чтобы получить <b>100 ₽</b>.</p>
+    <p>Не забудт вернуть долг, маленький лудик!</p>
+
+    <div class="counter" id="counterEl">0 / 10</div>
+    <div class="counter-sub" id="counterSub">Награда: 100 ₽</div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <button class="tap-btn" id="tapBtn">ЖМИ!</button>
+    <button class="modal-close" id="modalClose">Закрыть</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   👇 КАРТИНКИ / СИМВОЛЫ 👇
+============================================================ */
+const SYMBOLS = [
+  { id: "cherry", emoji: "🍒", img: 'images/fr1.jpg' },
+  { id: "lemon",  emoji: "🍋", img: 'images/fr2.jpg' },
+  { id: "bell",   emoji: "🔔", img: 'images/fr3.jpg' },
+  { id: "star",   emoji: "⭐", img: 'images/fr4.jpg' },
+  { id: "seven",  emoji: "7️⃣", img: 'images/fr5.jpg' },
+  { id: "diamond",emoji: "💎", img: 'images/fr6.jpg' },
+  { id: "friend", emoji: "😎", img: "images/fr7.jpg" },
+];
+
+const REELS_COUNT = 5;
+const COPIES = 4;
+/* Шансы выпадения: чем правее символ — тем реже */
+const WEIGHTS = [24, 22, 18, 14, 10, 7, 5];
+
+/* Множители ставки за 3 / 4 / 5 одинаковых слева направо */
+const PAYTABLE = {
+  cherry:  { 3: 2, 4: 5,  5: 12 },
+  lemon:   { 3: 2, 4: 5,  5: 12 },
+  bell:    { 3: 2, 4: 6,  5: 14 },
+  star:    { 3: 3, 4: 6,  5: 15 },
+  seven:   { 3: 3, 4: 7,  5: 18 },
+  diamond: { 3: 3, 4: 8,  5: 20 },
+  friend:  { 3: 3, 4: 8,  5: 25 },
+};
+
+const BET_MIN = 100;
+const BET_MAX = 1000;
+const BET_STEP = 100;
+const START_BALANCE = 2000;
+const START_BET = 100;
+
+const CREDIT_CLICKS = 10;
+const CREDIT_REWARD = 100;
+/* ============================================================ */
+
+const SAVE_KEY = "slot_machine_save_v1";
+
+const reelsEl   = document.getElementById("reels");
+const spinBtn   = document.getElementById("spinBtn");
+const messageEl = document.getElementById("message");
+const statsEl   = document.getElementById("stats");
+const balanceEl = document.getElementById("balanceEl");
+const betBox    = document.getElementById("betBox");
+const betEl     = document.getElementById("betEl");
+const betMinus  = document.getElementById("betMinus");
+const betPlus   = document.getElementById("betPlus");
+const soundBtn  = document.getElementById("soundToggle");
+const creditBtn = document.getElementById("creditBtn");
+const resetBtn  = document.getElementById("resetBtn");
+
+const modalOverlay = document.getElementById("modalOverlay");
+const modalClose   = document.getElementById("modalClose");
+const tapBtn       = document.getElementById("tapBtn");
+const counterEl    = document.getElementById("counterEl");
+const counterSub   = document.getElementById("counterSub");
+const progressFill = document.getElementById("progressFill");
+
+let balance = START_BALANCE;
+let bet = START_BET;
+let totalSpins = 0;
+let totalWins = 0;
+let creditProgress = 0;
+
+const strips = [];
+
+/* CELL_H подстраивается под реальный размер ячейки — важно для адаптива */
+let CELL_H = 120;
+function recalcCellH() {
+  const firstCell = document.querySelector(".cell");
+  if (firstCell) CELL_H = firstCell.offsetHeight;
+}
+
+/* ================= СОХРАНЕНИЕ ================= */
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      balance, bet, totalSpins, totalWins, creditProgress,
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (typeof d.balance === "number") balance = d.balance;
+    if (typeof d.bet === "number") {
+      bet = Math.min(BET_MAX, Math.max(BET_MIN, Math.round(d.bet / BET_STEP) * BET_STEP));
+    }
+    if (typeof d.totalSpins === "number") totalSpins = d.totalSpins;
+    if (typeof d.totalWins === "number") totalWins = d.totalWins;
+    if (typeof d.creditProgress === "number") creditProgress = d.creditProgress;
+    return true;
+  } catch (e) { return false; }
+}
+
+/* ================= ЗВУК ================= */
+let audioCtx = null;
+let soundOn = true;
+let bgTimer = null;
+let bgStep = 0;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playClick(pitch = 900) {
+  if (!soundOn) return;
+  const ctx = ensureAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(pitch, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(pitch * 0.55, ctx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.09, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.07);
+}
+
+function playWin() {
+  if (!soundOn) return;
+  const ctx = ensureAudio();
+  [523, 659, 784, 1047].forEach((f, i) => {
+    const t = ctx.currentTime + i * 0.13;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(f, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.4);
+  });
+}
+
+function playLose() {
+  if (!soundOn) return;
+  const ctx = ensureAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(400, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.4);
+  gain.gain.setValueAtTime(0.12, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.5);
+}
+
+function playCoin() {
+  if (!soundOn) return;
+  const ctx = ensureAudio();
+  const t = ctx.currentTime;
+  [880, 1320].forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(f, t + i * 0.05);
+    gain.gain.setValueAtTime(0.0001, t + i * 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.12, t + i * 0.05 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.05 + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t + i * 0.05);
+    osc.stop(t + i * 0.05 + 0.18);
+  });
+}
+
+const BG_NOTES = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+function startBgLoop() {
+  if (bgTimer || !soundOn) return;
+  ensureAudio();
+  bgStep = 0;
+  function tick() {
+    if (!soundOn || !audioCtx) return;
+    const freq = BG_NOTES[bgStep % BG_NOTES.length];
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.028, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.45);
+    if (bgStep % 3 === 0) {
+      const b = audioCtx.createOscillator();
+      const bg = audioCtx.createGain();
+      b.type = "sine";
+      b.frequency.setValueAtTime(freq / 2, t);
+      bg.gain.setValueAtTime(0.0001, t);
+      bg.gain.exponentialRampToValueAtTime(0.035, t + 0.02);
+      bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      b.connect(bg).connect(audioCtx.destination);
+      b.start(t);
+      b.stop(t + 0.32);
+    }
+    bgStep++;
+    bgTimer = setTimeout(tick, 320);
+  }
+  tick();
+}
+function stopBgLoop() {
+  if (bgTimer) { clearTimeout(bgTimer); bgTimer = null; }
+}
+
+/* ================= UI ================= */
+function updateBalanceUI() {
+  balanceEl.textContent = balance;
+  betEl.textContent = bet;
+  betBox.classList.toggle("low", balance < bet);
+  balanceEl.parentElement.classList.toggle("low", balance < bet);
+  const spinning = strips.some(s => s.busy);
+  spinBtn.disabled = balance < bet || spinning;
+  betMinus.disabled = spinning || bet <= BET_MIN;
+  betPlus.disabled = spinning || bet >= BET_MAX || bet + BET_STEP > balance;
+}
+function updateStats() {
+  statsEl.textContent =
+    `Прокруток: ${totalSpins}   |   Выигрышей: ${totalWins}   |   Ставка: ${bet} ₽`;
+}
+
+/* Считаем серию одинаковых символов слева направо (минимум 3) */
+function evaluateWin(result) {
+  const first = result[0];
+  let streak = 1;
+  for (let i = 1; i < result.length; i++) {
+    if (result[i] === first) streak++;
+    else break;
+  }
+  if (streak < 3) return null;
+
+  const sym = SYMBOLS[first];
+  const mult = PAYTABLE[sym.id]?.[streak];
+  if (!mult) return null;
+
+  return { streak, symbol: sym, mult, payout: bet => bet * mult };
+}
+
+function changeBet(delta) {
+  if (strips.some(s => s.busy)) return;
+  const next = bet + delta;
+  if (next < BET_MIN || next > BET_MAX) return;
+  if (delta > 0 && next > balance) return;
+  bet = next;
+  playClick(delta > 0 ? 1100 : 700);
+  updateBalanceUI();
+  updateStats();
+  saveState();
+}
+
+/* ================= БАРАБАНЫ ================= */
+function buildReels() {
+  for (let i = 0; i < REELS_COUNT; i++) {
+    const wrap = document.createElement("div");
+    wrap.className = "reel-wrap";
+    const strip = document.createElement("div");
+    strip.className = "strip";
+    for (let c = 0; c < COPIES; c++) {
+      for (const sym of SYMBOLS) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        if (sym.img) {
+          const im = document.createElement("img");
+          im.src = sym.img;
+          im.alt = sym.id;
+          cell.appendChild(im);
+        } else {
+          cell.textContent = sym.emoji;
+        }
+        strip.appendChild(cell);
+      }
+    }
+    wrap.appendChild(strip);
+    reelsEl.appendChild(wrap);
+    strips.push({ strip, topIndex: 0, busy: false, len: SYMBOLS.length });
+  }
+}
+
+function setStripTop(stripData, index) {
+  stripData.topIndex = index;
+  stripData.strip.style.transition = "none";
+  stripData.strip.style.transform = `translateY(${-index * CELL_H}px)`;
+}
+
+/* при ресайзе пересчитываем высоту и переустанавливаем позиции без анимации */
+function refreshLayout() {
+  recalcCellH();
+  strips.forEach(s => {
+    s.strip.style.transition = "none";
+    s.strip.style.transform = `translateY(${-s.topIndex * CELL_H}px)`;
+  });
+}
+
+function weightedRandom() {
+  const total = WEIGHTS.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < SYMBOLS.length; i++) {
+    r -= WEIGHTS[i];
+    if (r <= 0) return i;
+  }
+  return SYMBOLS.length - 1;
+}
+
+function spinReel(stripData, durationMs, finalIdx) {
+  return new Promise(resolve => {
+    stripData.busy = true;
+    const { strip, len } = stripData;
+    const targetTop = finalIdx + len * (COPIES - 1);
+    const startIdx = stripData.topIndex % len;
+    const spins = 3 + Math.floor(Math.random() * 2);
+    const startPos = startIdx + len * (COPIES - 1 - spins);
+    const endPos = targetTop;
+    const dist = Math.max(endPos - startPos, len);
+    const startTime = performance.now();
+    let lastClickCell = Math.floor(startPos);
+
+    function frame(now) {
+      const t = Math.min((now - startTime) / durationMs, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const pos = startPos + dist * ease;
+      strip.style.transform = `translateY(${-pos * CELL_H}px)`;
+
+      const currentCell = Math.floor(pos);
+      if (currentCell !== lastClickCell) {
+        lastClickCell = currentCell;
+        const speed = 1 - t;
+        playClick(700 + speed * 400);
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        strip.style.transition = "none";
+        strip.style.transform = `translateY(${-endPos * CELL_H}px)`;
+        stripData.topIndex = finalIdx;
+        stripData.busy = false;
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+/* ================= СПИН ================= */
+async function spin() {
+  if (balance < bet) return;
+  if (strips.some(s => s.busy)) return;
+
+  const currentBet = bet;
+  balance -= currentBet;
+  updateBalanceUI();
+  saveState();
+
+  spinBtn.disabled = true;
+  messageEl.textContent = "Крутим...";
+  messageEl.style.color = "#ffe9a8";
+  reelsEl.classList.remove("win");
+
+  const result = [];
+  for (let i = 0; i < REELS_COUNT; i++) result.push(weightedRandom());
+
+  /* Иногда подкручиваем серию слева: 3 / 4 / 5 */
+  if (Math.random() < 0.18) {
+    const pick = result[0];
+    const roll = Math.random();
+    const streak = roll < 0.2 ? 5 : roll < 0.45 ? 4 : 3;
+    for (let i = 0; i < streak; i++) result[i] = pick;
+  }
+
+  strips.forEach((s) => {
+    const startIdx = s.topIndex % s.len;
+    const startPos = startIdx + s.len * (COPIES - 4);
+    s.strip.style.transition = "none";
+    s.strip.style.transform = `translateY(${-startPos * CELL_H}px)`;
+  });
+
+  const promises = strips.map((s, i) => {
+    const dur = 900 + i * 220;
+    return spinReel(s, dur, result[i]);
+  });
+
+  await Promise.all(promises);
+
+  totalSpins++;
+
+  const win = evaluateWin(result);
+  if (win) {
+    const payout = win.payout(currentBet);
+    const label = win.symbol.emoji || win.symbol.id;
+    if (win.streak === 5) {
+      messageEl.textContent = `🏆 ДЖЕКПОТ! ${label}×5  +${payout} ₽`;
+      messageEl.style.color = "gold";
+    } else if (win.streak === 4) {
+      messageEl.textContent = `🔥 ${label}×4  +${payout} ₽`;
+      messageEl.style.color = "#ffd54a";
+    } else {
+      messageEl.textContent = `✨ ${label}×3  +${payout} ₽`;
+      messageEl.style.color = "#7CFC00";
+    }
+    reelsEl.classList.add("win");
+    balance += payout;
+    totalWins++;
+    playWin();
+  } else {
+    messageEl.textContent = "😢 Не повезло — крути ещё!";
+    messageEl.style.color = "#f88";
+    playLose();
+  }
+
+  updateStats();
+  updateBalanceUI();
+  saveState();
+}
+
+/* ================= КРЕДИТ ================= */
+function updateCreditUI() {
+  counterEl.textContent = `${creditProgress} / ${CREDIT_CLICKS}`;
+  progressFill.style.width = `${(creditProgress / CREDIT_CLICKS) * 100}%`;
+
+  if (creditProgress >= CREDIT_CLICKS) {
+    tapBtn.classList.add("done");
+    tapBtn.textContent = "✅ ПОЛУЧЕНО";
+    counterSub.textContent = `+${CREDIT_REWARD} ₽ зачислено`;
+  } else {
+    tapBtn.classList.remove("done");
+    tapBtn.textContent = "ЖМИ!";
+    counterSub.textContent = `Осталось: ${CREDIT_CLICKS - creditProgress} кликов`;
+  }
+}
+
+function openCreditModal() {
+  modalOverlay.classList.add("open");
+  updateCreditUI();
+  ensureAudio();
+  if (soundOn && !bgTimer) startBgLoop();
+}
+function closeCreditModal() {
+  modalOverlay.classList.remove("open");
+}
+
+function doCreditTap() {
+  if (creditProgress >= CREDIT_CLICKS) return;
+  creditProgress++;
+  playCoin();
+  updateCreditUI();
+  saveState();
+
+  if (creditProgress >= CREDIT_CLICKS) {
+    balance += CREDIT_REWARD;
+    messageEl.textContent = `💳 Вам одобрили микрозайм! +${CREDIT_REWARD} ₽`;
+    messageEl.style.color = "#7CFC00";
+    updateBalanceUI();
+    saveState();
+    setTimeout(() => {
+      creditProgress = 0;
+      updateCreditUI();
+      saveState();
+    }, 1200);
+  }
+}
+
+/* ================= ОБРАБОТЧИКИ ================= */
+
+/* Кредит: открытие/закрытие */
+creditBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); openCreditModal(); });
+modalClose.addEventListener("pointerdown", (e) => { e.preventDefault(); closeCreditModal(); });
+modalOverlay.addEventListener("pointerdown", (e) => {
+  if (e.target === modalOverlay) closeCreditModal();
+});
+
+/* ⚠️ ГЛАВНЫЙ ФИКС: pointerdown вместо click = мгновенный тап без задержки */
+tapBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  doCreditTap();
+});
+
+/* Пробел/Enter в модалке */
+document.addEventListener("keydown", (e) => {
+  if (modalOverlay.classList.contains("open") && (e.code === "Space" || e.code === "Enter")) {
+    e.preventDefault();
+    doCreditTap();
+  }
+});
+
+/* Спин — тоже pointerdown для мгновенного отклика */
+spinBtn.addEventListener("pointerdown", (e) => {
+  if (spinBtn.disabled) return;
+  e.preventDefault();
+  spin();
+});
+
+/* Ставка − / + */
+betMinus.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  changeBet(-BET_STEP);
+});
+betPlus.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  changeBet(BET_STEP);
+});
+
+/* Сброс */
+resetBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (!confirm("Сбросить весь прогресс? Баланс станет 2000 ₽, статистика обнулится.")) return;
+  balance = START_BALANCE;
+  bet = START_BET;
+  totalSpins = 0;
+  totalWins = 0;
+  creditProgress = 0;
+  messageEl.textContent = "Крути!";
+  messageEl.style.color = "#fff";
+  saveState();
+  updateBalanceUI();
+  updateStats();
+  updateCreditUI();
+});
+
+/* Звук вкл/выкл */
+soundBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  soundOn = !soundOn;
+  if (soundOn) {
+    ensureAudio();
+    soundBtn.textContent = "🔊 Звук";
+    startBgLoop();
+  } else {
+    soundBtn.textContent = "🔇 Звук";
+    stopBgLoop();
+  }
+});
+
+/* ================= INIT ================= */
+loadState();
+buildReels();
+recalcCellH();
+strips.forEach(s => setStripTop(s, Math.floor(Math.random() * SYMBOLS.length)));
+updateStats();
+updateBalanceUI();
+updateCreditUI();
+
+window.addEventListener("resize", refreshLayout);
+window.addEventListener("orientationchange", () => setTimeout(refreshLayout, 120));
+
+function startAudioOnce() {
+  ensureAudio();
+  if (soundOn) startBgLoop();
+  document.removeEventListener("pointerdown", startAudioOnce);
+}
+document.addEventListener("pointerdown", startAudioOnce);
+</script>
+</body>
+</html>
